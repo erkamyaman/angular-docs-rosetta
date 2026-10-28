@@ -241,6 +241,9 @@ describe('translating a page', () => {
     let r = await run(['check', 'fr', lone]);
     assert.equal(r.code, 1);
     assert.match(r.stdout, /no snapshot NG0100.en.md next to it/);
+    r = await run(['check', 'fr']);
+    assert.equal(r.code, 1, 'the whole-language check (what CI runs) finds it too');
+    assert.match(r.stdout, /no snapshot NG0100.en.md next to it/);
     await write(lone.replace('.md', '.en.md'), await read(path.join(upstreamSrc, 'content/reference/errors/NG0100.md')));
     r = await run(['check', 'fr', lone]);
     assert.equal(r.code, 1);

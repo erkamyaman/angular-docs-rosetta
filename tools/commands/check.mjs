@@ -22,7 +22,7 @@ import {lintGlossary, writeGlossaryRules} from '../lib/glossary.mjs';
 import {loadDictionaries, loadGlossary, loadLanguageRules, loadSite} from '../lib/languages.mjs';
 import {ALERT_KEYWORDS, countAlerts, countCodeFences, countDocsElements, extractHeadings, extractLinkTargets, extractStepTitles, proseLines} from '../lib/markdown.mjs';
 import {INDEX_HTML, NAVIGATION_FILE, adevSrc, langSrcDir, originDir, rootDir, toPosix} from '../lib/paths.mjs';
-import {blobHash, hasMarkerLine, isSnapshot, listSnapshots, markerStyle, readMarkerOf, sidecarOf, snapshotOf, stripMarker} from '../lib/snapshots.mjs';
+import {blobHash, hasMarkerLine, isSnapshot, listOverlayFiles, listSnapshots, markerStyle, readMarkerOf, sidecarOf, snapshotOf, stripMarker} from '../lib/snapshots.mjs';
 
 export default command({
   meta: {name: 'check', description: 'Validate translations, dictionaries and language configuration'},
@@ -115,7 +115,16 @@ class Checker {
         return abs.startsWith(src) ? abs : path.join(src, p);
       });
     }
-    return (await listSnapshots(lang)).map((s) => s.translated);
+    const snapshots = await listSnapshots(lang);
+    const paired = new Set(snapshots.map((s) => s.rel));
+    const unpaired = [];
+    const upstreamSrc = adevSrc(originDir);
+    if (await exists(upstreamSrc)) {
+      for (const rel of await listOverlayFiles(lang)) {
+        if (!paired.has(rel) && (await exists(path.join(upstreamSrc, rel)))) unpaired.push(path.join(src, rel));
+      }
+    }
+    return [...snapshots.map((s) => s.translated), ...unpaired];
   }
 
   // -------------------------------------------------------------------------------------------
