@@ -141,6 +141,7 @@ describe('create-language', () => {
     assert.equal(pairs[0].replace, '<html lang="ar" dir="rtl"');
     assert.ok(!(await exists(path.join(root, 'i18n', '_example'))));
     assert.ok(!(await exists(path.join(root, '.github/workflows/template-canary.yml'))));
+    assert.ok(!(await exists(path.join(root, '.github/workflows/template-cleanup.yml'))));
     assert.deepEqual(await json('languages.json'), ['ar', 'fr']);
     assert.match(await read(path.join(root, 'CODEOWNERS')), /\/i18n\/ar\/ {3}@your-org\/your-repo-ar/);
     const rc = await json('.firebaserc');

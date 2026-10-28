@@ -4,7 +4,7 @@
   "features": {
     "ghcr.io/devcontainers/features/git:1": {}
   },
-  "postCreateCommand": "pnpm install && pnpm bootstrap",
+  "postCreateCommand": "npm install -g pnpm@10.17.1 && pnpm install && pnpm bootstrap",
   "customizations": {
     "vscode": {
       "extensions": [

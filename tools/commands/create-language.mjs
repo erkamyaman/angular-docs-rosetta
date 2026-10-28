@@ -211,7 +211,8 @@ export default command({
       if (removeExample) {
         await remove(example);
         await remove(path.join(rootDir, '.github', 'workflows', 'template-canary.yml'));
-        log.info('removed i18n/_example and .github/workflows/template-canary.yml');
+        await remove(path.join(rootDir, '.github', 'workflows', 'template-cleanup.yml'));
+        log.info('removed i18n/_example, .github/workflows/template-canary.yml and template-cleanup.yml');
       }
     }
 

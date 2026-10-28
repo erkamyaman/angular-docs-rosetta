@@ -65,6 +65,7 @@ export async function makeRepo({example = true, git = false, origin = false} = {
   await writeFile(path.join(root, '.bazelrc'), 'build --jobs=1\n');
   await mkdir(path.join(root, '.github', 'workflows'), {recursive: true});
   await writeFile(path.join(root, '.github', 'workflows', 'template-canary.yml'), 'name: canary\n');
+  await writeFile(path.join(root, '.github', 'workflows', 'template-cleanup.yml'), 'name: cleanup\n');
   if (example) {
     // A frozen copy of the template's example language: the suite must pass in repositories where
     // `create-language --remove-example` deleted i18n/_example.

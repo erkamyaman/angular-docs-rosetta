@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   push:
     branches: [main]
 
@@ -91,7 +92,7 @@ jobs:
         run: pnpm status ${{ matrix.lang }} --md >> "$GITHUB_STEP_SUMMARY"
 
   build:
-    # Full Bazel build only when the build inputs changed or when asked for with the `build` label.
+    # Full Bazel build on push to main, or on a PR when asked for with the `build` label.
     name: Build ${{ matrix.lang }}
     needs: [languages, check]
     if: >-

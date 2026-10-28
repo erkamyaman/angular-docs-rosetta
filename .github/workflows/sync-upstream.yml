@@ -35,9 +35,11 @@ jobs:
       - run: pnpm bootstrap
       - name: Update origin
         id: update
+        env:
+          TARGET: ${{ github.event.inputs.target || 'latest' }}
         run: |
           BEFORE=$(git -C origin rev-parse HEAD)
-          pnpm update-origin "${{ github.event.inputs.target || 'latest' }}" | tee /tmp/update.log
+          pnpm update-origin "$TARGET" | tee /tmp/update.log
           AFTER=$(git -C origin rev-parse HEAD)
           echo "before=$BEFORE" >> "$GITHUB_OUTPUT"
           echo "after=$AFTER" >> "$GITHUB_OUTPUT"
