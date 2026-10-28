@@ -325,6 +325,40 @@ describe('translating a page', () => {
     assert.equal(entry.state, 'up-to-date');
     assert.equal(entry.overlay, true);
   });
+  test('binary overlays carry their marker in a sidecar and keep their bytes', async () => {
+    const rel = 'assets/images/logo.png';
+    const upstreamPng = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0xff, 0x0d, 0x0a]);
+    const localizedPng = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0xfe]);
+    const upstreamFile = path.join(upstreamSrc, rel);
+    const file = path.join(root, 'i18n/fr/src', rel);
+    const {readFile, rm} = await import('node:fs/promises');
+    await write(upstreamFile, upstreamPng);
+    try {
+      assert.equal((await run(['status', 'fr', '--init', rel])).code, 0);
+      assert.ok((await readFile(file)).equals(upstreamPng), 'bytes untouched, no marker line');
+      assert.ok((await readFile(file.replace('.png', '.en.png'))).equals(upstreamPng));
+      assert.ok(await exists(`${file}.source`));
+      await write(file, localizedPng);
+      let r = await run(['check', 'fr']);
+      assert.equal(r.code, 0, r.out);
+      let entry = JSON.parse((await run(['status', 'fr', '--json'])).stdout).files.find((f) => f.rel === rel);
+      assert.equal(entry.state, 'up-to-date');
+      await rm(`${file}.source`);
+      r = await run(['check', 'fr', rel]);
+      assert.equal(r.code, 1);
+      assert.match(r.stdout, /no source marker in logo.png.source next to it/);
+      assert.equal((await run(['status', 'fr', '--mark', rel])).code, 0);
+      assert.ok((await readFile(file)).equals(localizedPng), '--mark leaves the bytes alone');
+      assert.equal((await run(['check', 'fr', rel])).code, 0);
+      await write(file.replace('.png', '.en.png'), localizedPng);
+      entry = JSON.parse((await run(['status', 'fr', '--json'])).stdout).files.find((f) => f.rel === rel);
+      assert.equal(entry.state, 'stale-snapshot');
+      assert.equal(entry.class, undefined, 'no diff class for binaries');
+      assert.match((await run(['status', 'fr', '--diff', rel])).stdout, /is binary: no text diff/);
+    } finally {
+      for (const f of [upstreamFile, file, file.replace('.png', '.en.png'), `${file}.source`]) await rm(f, {force: true});
+    }
+  });
 });
 
 describe('sync: upstream changes', () => {

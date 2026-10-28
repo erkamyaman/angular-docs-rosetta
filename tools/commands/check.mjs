@@ -123,7 +123,7 @@ class Checker {
       for (const rel of await listOverlayFiles(lang)) {
         if (paired.has(rel) || !(await exists(path.join(upstreamSrc, rel)))) continue;
         const file = path.join(src, rel);
-        if (looksLikeText(await readBytes(file))) unpaired.push(file);
+        if (!markerStyle(file) || looksLikeText(await readBytes(file))) unpaired.push(file);
       }
     }
     return [...snapshots.map((s) => s.translated), ...unpaired];
@@ -145,10 +145,12 @@ class Checker {
       this.err(label, `no snapshot ${path.basename(snapshot)} next to it: the next sync would overwrite this translation`);
       return;
     }
-    const translated = await readText(file);
-    const english = await readText(snapshot);
+    const translatedBuf = await readBytes(file);
+    const englishBuf = await readBytes(snapshot);
+    const translated = translatedBuf.toString('utf8');
+    const english = englishBuf.toString('utf8');
     const marker = await readMarkerOf(file, translated);
-    const snapshotHash = blobHash(english);
+    const snapshotHash = blobHash(englishBuf);
     if (!marker) {
       const where = markerStyle(file) ? 'on the first line' : `in ${path.basename(sidecarOf(file))} next to it`;
       this.err(label, `no source marker ${where} (expected: source: ${snapshotHash}; pnpm status ${lang} --mark ${rel})`);
@@ -159,6 +161,10 @@ class Checker {
     const upstream = path.join(adevSrc(originDir), rel);
     if ((await exists(adevSrc(originDir))) && !(await exists(upstream))) {
       this.warn(label, 'upstream no longer has this file: move or delete the pair');
+    }
+    if (!looksLikeText(englishBuf) || !looksLikeText(translatedBuf)) {
+      if (translatedBuf.equals(englishBuf)) this.warn(label, 'identical to the English snapshot: nothing translated yet');
+      return;
     }
 
     const ext = path.extname(file).toLowerCase();
