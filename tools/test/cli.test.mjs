@@ -244,6 +244,11 @@ describe('translating a page', () => {
     r = await run(['check', 'fr']);
     assert.equal(r.code, 1, 'the whole-language check (what CI runs) finds it too');
     assert.match(r.stdout, /no snapshot NG0100.en.md next to it/);
+    const binary = path.join(root, 'i18n/fr/src/content/reference/license.md');
+    await write(binary, Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x01]));
+    r = await run(['check', 'fr']);
+    assert.doesNotMatch(r.stdout, /license\.md/, 'binary overlays have no snapshot workflow yet: not selected');
+    await (await import('node:fs/promises')).rm(binary);
     await write(lone.replace('.md', '.en.md'), await read(path.join(upstreamSrc, 'content/reference/errors/NG0100.md')));
     r = await run(['check', 'fr', lone]);
     assert.equal(r.code, 1);
